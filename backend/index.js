@@ -10,8 +10,8 @@ const cartRoutes = require('./routes/cart.route.js');
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: ['https://crud-app-frontend-wine.vercel.app', 'http://localhost:5173', 'http://localhost:5174'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));

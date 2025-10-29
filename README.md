@@ -15,9 +15,6 @@ A clean, responsive Product management application built with the MERN stack (Mo
 - **Form Validation** - Ensures data integrity
 - **Alert Notifications** - Provides feedback on all operations
 
-## 🔗 Live Demo
-<a href = "https://crud-app-frontend-wine.vercel.app">Frontend Application</a> | <a href = "https://crud-app-backend-aaryan-sharma-5s-projects.vercel.app">Backend API</a>
-
 ## 🚀 Tech Stack
 
 <table>

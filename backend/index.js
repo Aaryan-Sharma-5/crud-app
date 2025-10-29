@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const app = express();
 const productRoutes = require('./routes/product.route.js');
+const cartRoutes = require('./routes/cart.route.js');
 
 // Middleware
 app.use(express.json());
@@ -54,6 +55,7 @@ app.get('/', (req, res) => {
 
 // Apply routes AFTER middleware
 app.use('/api/products', productRoutes);
+app.use('/api/cart', cartRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

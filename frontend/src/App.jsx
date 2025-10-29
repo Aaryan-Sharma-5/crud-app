@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
+import Cart from "./Cart";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3000/api/products";
+  import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -23,6 +24,8 @@ function App() {
   const [sortField, setSortField] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState("desc");
   const [searchTerm, setSearchTerm] = useState("");
+  const [view, setView] = useState("products"); // 'products' or 'cart'
+  const [cartCount, setCartCount] = useState(0);
 
   // Auto-dismiss alerts
   useEffect(() => {
@@ -39,7 +42,7 @@ function App() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(API_URL, { withCredentials: true });
+      const res = await axios.get(`${API_URL}/api/products`, { withCredentials: true });
       setProducts(res.data);
       setError("");
     } catch {
@@ -48,8 +51,19 @@ function App() {
     setLoading(false);
   };
 
+  // Fetch cart count
+  const fetchCartCount = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/cart`);
+      setCartCount(res.data.reduce((sum, item) => sum + item.quantity, 0));
+    } catch {
+      console.error("Failed to fetch cart count");
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
+    fetchCartCount();
   }, []);
 
   // Handle form input
@@ -78,13 +92,13 @@ function App() {
       };
 
       if (editingId) {
-        await axios.put(`${API_URL}/${editingId}`, formData, {
+        await axios.put(`${API_URL}/api/products/${editingId}`, formData, {
           withCredentials: true,
         });
         setSuccess("Product updated successfully!");
         setEditingId(null);
       } else {
-        await axios.post(API_URL, formData, { withCredentials: true });
+        await axios.post(`${API_URL}/api/products`, formData, { withCredentials: true });
         setSuccess("Product added successfully!");
       }
       setForm({ name: "", quantity: "", price: "", imageUrl: "" });
@@ -112,12 +126,26 @@ function App() {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this product?")) return;
     try {
-      await axios.delete(`${API_URL}/${id}`, { withCredentials: true });
+      await axios.delete(`${API_URL}/api/products/${id}`, { withCredentials: true });
       fetchProducts();
       setSuccess("Product deleted successfully!");
       setError("");
     } catch {
       setError("Failed to delete product");
+    }
+  };
+
+  // Add to cart
+  const handleAddToCart = async (product, quantity = 1) => {
+    try {
+      await axios.post(`${API_URL}/api/cart`, {
+        productId: product._id,
+        quantity
+      });
+      fetchCartCount();
+      setSuccess(`${product.name} added to cart!`);
+    } catch {
+      setError("Failed to add to cart");
     }
   };
 
@@ -202,7 +230,29 @@ function App() {
 
   return (
     <div className="container">
-      <h1>Simple MERN CRUD App</h1>
+      <nav className="nav-bar">
+        <h1>E-Commerce Shop</h1>
+        <div className="nav-buttons">
+          <button 
+            className={view === "products" ? "active" : ""}
+            onClick={() => setView("products")}
+          >
+            Products
+          </button>
+          <button 
+            className={view === "cart" ? "active" : ""}
+            onClick={() => setView("cart")}
+          >
+            Cart {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+          </button>
+        </div>
+      </nav>
+
+      {view === "cart" ? (
+        <Cart onCartUpdate={fetchCartCount} />
+      ) : (
+        <>
+      <h2>Product Management</h2>
       {success && <div className="alert alert-success">{success}</div>}
       {error && <div className="alert alert-error">{error}</div>}
       {validationError && (
@@ -282,7 +332,7 @@ function App() {
         </div>
       ) : sortedAndFilteredProducts.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">📦</div>
+          <div className="empty-state-icon">□</div>
           <h3>No Products Found</h3>
           <p>Add your first product using the form above.</p>
         </div>
@@ -343,6 +393,12 @@ function App() {
                     )}
                   </td>
                   <td className="col-actions">
+                    <button 
+                      onClick={() => handleAddToCart(product)} 
+                      className="add-to-cart"
+                    >
+                      + Add to Cart
+                    </button>
                     <button onClick={() => handleEdit(product)}>Edit</button>
                     <button
                       onClick={() => handleDelete(product._id)}
@@ -396,6 +452,8 @@ function App() {
             {Math.min(indexOfLastItem, totalItems)} of {totalItems} products
           </div>
         </>
+      )}
+      </>
       )}
     </div>
   );

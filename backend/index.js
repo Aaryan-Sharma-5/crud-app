@@ -9,12 +9,33 @@ const cartRoutes = require('./routes/cart.route.js');
 
 // Middleware
 app.use(express.json());
+
+// CORS configuration
+const allowedOrigins = [
+  'https://crud-app-frontend-wine.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: ['https://crud-app-frontend-wine.vercel.app', 'http://localhost:5173', 'http://localhost:5174'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Connect to MongoDB with proper serverless handling
 let cachedDb = null;
